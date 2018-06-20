@@ -1,0 +1,60 @@
+#!/bin/bash
+# 先删选出错误的行，log.txt为日志数据。
+cat log.txt | grep error >temp.txt
+# 保存错误类型
+error_type=()
+# 保存对应的错误提示
+error_info=()
+# 对应的错误记数
+error_count=()
+# 对应的时间戳
+error_time=()
+while read line
+do
+	# 按行读取错误信息 取出60及以后的字符
+	errorline=${line:60}
+	# 获取错误时间 取 0-15的字符
+	errortime=${line:0:15}
+	# 获取错误类型 取出‘:‘的左边的
+	errortype=${errorline%%:*}
+    # 获取错误信息 取出“：”右边的
+	errorinfo=${errorline##*:}
+	#echo $errortime
+	#echo $errortype 
+	#echo $errorinfo
+	mark="NO"	
+	
+	# 判断该错误类型 有了没
+	for(( i=0;i<${#error_type[@]};i++))
+		do
+		
+			#echo ${error_type[$i]} ${error_type[$i]}
+			# 如果存在该错误 类型 ，以下更新记录
+			if [ "${error_type[$i]}" == "$errortype" ];then
+			error_type[$i]=$errortype 
+			error_info[$i]=$errorinfo
+			#echo ${error_count[$i]}
+			# 该错误类型 次数+1
+			error_count[$i]=`expr ${error_count[$i]}  + 1`
+			# 时间追加
+			error_time[$i]=${error_time[$i]}" "$errortime
+			mark="YES"
+			#echo "YES"
+			break;
+			fi	
+	done
+	# 判断已经有的错误类型，跳过追加，上面已经统计了
+	if [ "$mark" == "YES" ];then
+		continue
+	fi	
+	# 记录新添加没有的错误类型	追加到数组里
+	error_type[${#error_type[*]}]=$errortype 
+	error_info[${#error_info[*]}]=$errorinfo
+	error_time[${#error_time[*]}]=$error_time 
+	error_count[${#error_count[*]}]="1"
+#	echo "add.."
+done < temp.txt
+echo "错误类型有：" ${error_type[@]}
+echo "对应的错误信息：" ${error_info[@]}
+echo "对应的错误次数: " ${error_count[@]}
+echo "对应的时间戳:"${error_time[@]}
